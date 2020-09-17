@@ -26,6 +26,28 @@ class FullName:
         return FullName(family_name, first_name)
 
 
+@dataclasses.dataclass(frozen=True)
+class UserId:
+    """エンティティで使用するuser_id"""
+
+    value: str
+
+    def __eq__(self, other):
+        """同一かどうかの確認"""
+        return isinstance(other, UserId) and (self.value == other.value)
+
+
+@dataclasses.dataclass(frozen=True)
+class UserName:
+    """エンティティで使用するusername"""
+
+    value: str
+
+    def __eq__(self, other):
+        """同一かどうかの確認"""
+        return isinstance(other, UserName) and (self.value == other.value)
+
+
 class TestFullNameValueObject(unittest.TestCase):
     def test_値オブジェクトの作成_成功(self):
         full_name = FullName("hoge", "taro")
@@ -33,13 +55,9 @@ class TestFullNameValueObject(unittest.TestCase):
         self.assertEqual("taro", full_name.first_name)
 
     def test_属性の書き換え_エラー(self):
-        full_name = FullName("hoge", "taro")
-        try:
+        with self.assertRaises(FrozenInstanceError):
+            full_name = FullName("hoge", "taro")
             full_name.family_name = "huga"
-        except FrozenInstanceError:
-            pass
-        finally:
-            self.assertEqual("hoge", full_name.family_name)
 
     def test_属性の更新_成功(self):
         full_name = FullName("hoge", "taro")
@@ -57,13 +75,9 @@ class TestFullNameValueObject(unittest.TestCase):
         self.assertEqual(full_name1, full_name11)
 
     def test_10文字以上のファミリーネーム_エラー(self):
-        full_name = FullName("huga", "jiro")
-        try:
+        with self.assertRaises(Exception):
+            full_name = FullName("huga", "jiro")
             full_name = full_name.changeName("hugahogepiyo", "jiro")
-        except Exception:
-            pass
-        finally:
-            self.assertEqual("huga", full_name.family_name)
 
 
 if __name__ == "__main__":
