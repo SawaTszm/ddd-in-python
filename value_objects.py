@@ -1,4 +1,6 @@
+import unittest
 import dataclasses
+from dataclasses import FrozenInstanceError
 
 
 @dataclasses.dataclass(frozen=True)  # イミュータブルクラス
@@ -24,25 +26,45 @@ class FullName:
         return FullName(family_name, first_name)
 
 
-full_name = FullName("hoge", "taro")
-print(full_name.family_name)
+class TestFullNameValueObject(unittest.TestCase):
+    def test_値オブジェクトの作成_成功(self):
+        full_name = FullName("hoge", "taro")
+        self.assertEqual("hoge", full_name.family_name)
+        self.assertEqual("taro", full_name.first_name)
 
-# 書き換えようとした場合、怒られる
-# full_name.family_name = "huga"
-#   > dataclasses.FrozenInstanceError: cannot assign to field 'family_name'
+    def test_属性の書き換え_エラー(self):
+        full_name = FullName("hoge", "taro")
+        try:
+            full_name.family_name = "huga"
+        except FrozenInstanceError:
+            pass
+        finally:
+            self.assertEqual("hoge", full_name.family_name)
 
-# 同一の値オブジェクトかどうかを確認する
-full_name1 = FullName("hoge", "taro")
-full_name11 = FullName("hoge", "taro")
-full_name2 = FullName("piyo", "taro")
-print(full_name1 == full_name1)  # True
-print(full_name1 == full_name2)  # False
-print(full_name1 == full_name11)  # True
+    def test_属性の更新_成功(self):
+        full_name = FullName("hoge", "taro")
+        full_name = full_name.changeName("huga", "taro")
 
-# 変更する時は新しい値オブジェクトと交換される
-full_name = full_name.changeName("huga", "jiro")
-print(full_name.family_name)
+        self.assertEqual("huga", full_name.family_name)
 
-# 10文字以上のファミリーネームは怒られる
-# full_name = full_name.changeName("hugahogepiyo", "jiro")
-#   > Exception: ファミリーネームは10文字以下にしてください
+    def test_同一の値オブジェクトを判別する_成功(self):
+        full_name1 = FullName("hoge", "taro")
+        full_name11 = FullName("hoge", "taro")
+        full_name2 = FullName("piyo", "taro")
+
+        self.assertEqual(full_name1, full_name1)
+        self.assertNotEqual(full_name1, full_name2)
+        self.assertEqual(full_name1, full_name11)
+
+    def test_10文字以上のファミリーネーム_エラー(self):
+        full_name = FullName("huga", "jiro")
+        try:
+            full_name = full_name.changeName("hugahogepiyo", "jiro")
+        except Exception:
+            pass
+        finally:
+            self.assertEqual("huga", full_name.family_name)
+
+
+if __name__ == "__main__":
+    unittest.main()
